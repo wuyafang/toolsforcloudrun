@@ -1,6 +1,16 @@
 FROM golang:alpine
 
-RUN ls -la src
-RUN go build -o netaddr main.go
+WORKDIR /app
 
-CMD ["./netaddr"]
+# Download Go modules
+COPY go.mod .
+RUN go mod download
+
+COPY *.go ./
+
+RUN ls -la
+RUN go build -o /netaddr
+
+EXPOSE 8080
+
+CMD ["/netaddr"]
