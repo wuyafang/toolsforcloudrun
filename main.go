@@ -52,9 +52,11 @@ func main() {
 	if sleepTime != "" {
 		duration, _ = time.ParseDuration(sleepTime)
 	}
+	startTime := time.Now()
 	go func() {
 		for {
 			println("background thread is running...")
+			println(fmt.Sprintf("time passed %d seconds since programming start",time.Now().Second()-startTime.Second()))
 			time.Sleep(duration)
 		}
 	}()
