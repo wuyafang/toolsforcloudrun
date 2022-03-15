@@ -56,13 +56,14 @@ func main() {
 	go func() {
 		for {
 			println("background thread is running...")
-			println(fmt.Sprintf("time passed %d seconds since programming start",time.Now().Second()-startTime.Second()))
+			startDuration := time.Now().Sub(startTime)
+			println(fmt.Sprintf("time passed %s since programming start",startDuration.String()))
 			time.Sleep(duration)
 		}
 	}()
 
 	//开启服务器
-	fmt.Print("helloworld: starting server...")
+	fmt.Println("helloworld: starting server...")
 
 	http.HandleFunc("/", handler)
 
@@ -71,6 +72,6 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Printf("helloworld: listening on port %s", port)
-	fmt.Print(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	fmt.Printf("helloworld: listening on port %s\n", port)
+	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
