@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/http"
+	"os"
 	"strings"
+	"time"
 )
 
 func GetOutBoundIP() (ip string, err error) {
@@ -18,7 +21,22 @@ func GetOutBoundIP() (ip string, err error) {
 	return
 }
 
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("helloworld: received a request")
+	target := os.Getenv("TARGET")
+	if target == "" {
+		target = "World"
+	}
 
+	duration := 5 * time.Second
+	sleepTime := os.Getenv("SLEEP_TIME")
+	if sleepTime != "" {
+		duration, _ = time.ParseDuration(sleepTime)
+	}
+	time.Sleep(duration)
+
+	fmt.Fprintf(w, "Hello %s!\n", target)
+}
 
 func main() {
 	//得到IP地址
@@ -27,9 +45,9 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Println(ip)
-	
+
 	//开启后台进程
-        duration := 5 * time.Second
+	duration := 5 * time.Second
 	sleepTime := os.Getenv("SLEEP_TIME")
 	if sleepTime != "" {
 		duration, _ = time.ParseDuration(sleepTime)
@@ -39,10 +57,10 @@ func main() {
 			println("background thread is running...")
 			time.Sleep(duration)
 		}
-	}
-	
+	}()
+
 	//开启服务器
-	log.Print("helloworld: starting server...")
+	fmt.Print("helloworld: starting server...")
 
 	http.HandleFunc("/", handler)
 
@@ -51,6 +69,6 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("helloworld: listening on port %s", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	fmt.Printf("helloworld: listening on port %s", port)
+	fmt.Print(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
