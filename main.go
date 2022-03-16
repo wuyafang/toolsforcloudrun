@@ -104,6 +104,7 @@ func main() {
 	// Add extra handling here to clean up resources, such as flushing logs and
 	// closing any database or Redis connections.
 	fmt.Println("after 10s the server will be shutdown")
+	time.Sleep(10*time.Second)
 	// Gracefully shutdown the server by waiting on existing requests (except websockets).
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("server shutdown failed: %+v", err)
