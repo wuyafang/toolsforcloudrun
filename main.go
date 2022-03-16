@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -65,13 +69,44 @@ func main() {
 	//开启服务器
 	fmt.Println("helloworld: starting server...")
 
-	http.HandleFunc("/", handler)
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	fmt.Printf("helloworld: listening on port %s\n", port)
-	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: http.HandlerFunc(handler),
+	}
+
+	// Create channel to listen for signals.
+	signalChan := make(chan os.Signal, 1)
+	// SIGINT handles Ctrl+C locally.
+	// SIGTERM handles Cloud Run termination signal.
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start HTTP server.
+	go func() {
+		log.Printf("listening on port %s", port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	// Receive output from signalChan.
+	sig := <-signalChan
+	log.Printf("%s signal caught", sig)
+
+	// Timeout if waiting for connections to return idle.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Add extra handling here to clean up resources, such as flushing logs and
+	// closing any database or Redis connections.
+	fmt.Println("after 10s the server will be shutdown")
+	// Gracefully shutdown the server by waiting on existing requests (except websockets).
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("server shutdown failed: %+v", err)
+	}
+	log.Print("server exited")
 }
